@@ -2,3 +2,4 @@ fastapi[standard]
 sqlalchemy
 gunicorn
 line-bot-sdk
+google-generativeai
