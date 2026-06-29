@@ -18,8 +18,8 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 
 
-@app.post("/webhook")
-async def webhook(request: Request):
+@app.post("/callback")
+async def callback(request: Request):
     signature = request.headers.get("X-Line-Signature", "")
     body = await request.body()
     try:
