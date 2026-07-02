@@ -3,3 +3,4 @@ sqlalchemy
 gunicorn
 line-bot-sdk
 google-generativeai
+google-api-python-client

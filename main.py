@@ -4,7 +4,7 @@ from linebot.v3.exceptions import InvalidSignatureError
 from linebot.v3.messaging import Configuration
 
 from config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET
-from routers import travel
+from routers import travel, yt_router
 
 app = FastAPI()
 
@@ -12,6 +12,7 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 
 travel.register(handler, configuration)
+yt_router.register(handler, configuration)
 
 
 @app.post("/callback")
