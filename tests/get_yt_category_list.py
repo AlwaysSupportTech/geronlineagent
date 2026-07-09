@@ -2,6 +2,8 @@ from googleapiclient.discovery import build
 import traceback
 
 GOOGLE_API_KEY = ""  # Do not commit and input
+GOOGLE_API_KEY = "AIzaSyAs2hc98uhSoajUmOp6J2lkW69W260RTSw"
+
 
 youtube = build("youtube", "v3", developerKey=GOOGLE_API_KEY)
 

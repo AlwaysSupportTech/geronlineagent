@@ -13,7 +13,7 @@ from linebot.v3.messaging import (
     TextMessage,
     URIAction,
 )
-from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from linebot.v3.webhooks import MessageEvent
 
 from services.gemini import get_attractions
 
@@ -71,8 +71,7 @@ def _build_bubble(attraction: dict) -> FlexBubble:
 TRIGGER_KEYWORDS = {"出去玩", "旅遊", "景點"}
 
 
-def register(handler, configuration):
-    @handler.add(MessageEvent, message=TextMessageContent)
+def register(configuration):
     def handle_text(event: MessageEvent):
         user_id = event.source.user_id
         text = event.message.text.strip()
@@ -106,3 +105,5 @@ def register(handler, configuration):
                     ],
                 )
             )
+
+    return handle_text
