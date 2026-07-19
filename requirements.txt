@@ -5,3 +5,4 @@ line-bot-sdk
 # google-generativeai
 google-genai
 google-api-python-client
+requests
