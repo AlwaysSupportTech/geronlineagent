@@ -17,6 +17,7 @@ client = genai.Client(
 
 _model = "gemini-3.1-flash-lite"
 _search_model = "gemini-3.1-flash-lite"
+_image_model = "gemini-3.1-flash-image"  # 目前的合理預設值，若模型名稱失效請依錯誤訊息調整
 
 _PROMPT = """請推薦「{region}」最適合電視新聞或旅遊節目介紹的 5 個景點。
 
@@ -80,6 +81,18 @@ def get_attractions(region: str) -> list[dict]:
     )
     print("[Gemini get_attractions]", response.text)
     return _parse_json(response.text)
+
+
+def generate_image(prompt: str) -> bytes:
+    response = client.models.generate_content(
+        model=_image_model,
+        contents=prompt,
+        config=types.GenerateContentConfig(response_modalities=["IMAGE"]),
+    )
+    for part in response.candidates[0].content.parts:
+        if part.inline_data is not None:
+            return part.inline_data.data
+    raise RuntimeError("Gemini 沒有回傳圖片資料")
 
 
 def filter_videos(videos: list[dict]) -> list[dict]:
