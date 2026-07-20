@@ -1,107 +1,71 @@
-import json
-import os
-import time
+import random
+from collections import Counter
 
 from linebot.v3.messaging import (
     ApiClient,
-    FlexBubble,
-    FlexBox,
-    FlexButton,
-    FlexCarousel,
-    FlexImage,
-    FlexMessage,
-    FlexText,
     MessagingApi,
     ReplyMessageRequest,
     TextMessage,
-    URIAction,
 )
 from linebot.v3.webhooks import MessageEvent
 
-from services.youtube import search_videos_by_topic
+from services.youtube_scraper import search_youtube_links
 
 TRIGGER_KEYWORDS = {"推薦影片", "熱門影片", "YouTube", "youtube"}
-_RECOMMEND_REASON = "健康、理財、人際溝通、房地產相關影片"
 
-_CACHE_PATH = "yt_recommend_cache.json"
-_CACHE_TTL_SECONDS = 12 * 60 * 60
-
-
-def _read_cache() -> list[dict] | None:
-    try:
-        if time.time() - os.path.getmtime(_CACHE_PATH) > _CACHE_TTL_SECONDS:
-            return None
-        with open(_CACHE_PATH, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (OSError, json.JSONDecodeError):
-        return None
+_TOPICS = ["健康", "理財", "人際溝通", "房地產"]
+_LINK_COUNT = 5
+_TOPIC_CAP = 2
 
 
-def _write_cache(videos: list[dict]) -> None:
-    with open(_CACHE_PATH, "w", encoding="utf-8") as f:
-        json.dump(videos, f, ensure_ascii=False)
+def _pick_topics(n: int = _LINK_COUNT, cap: int = _TOPIC_CAP) -> list[str]:
+    counts = {t: 0 for t in _TOPICS}
+    picks = []
+    for _ in range(n):
+        candidates = [t for t in _TOPICS if counts[t] < cap]
+        topic = random.choice(candidates)
+        counts[topic] += 1
+        picks.append(topic)
+    return picks
 
 
-def _format_views(views: str) -> str:
-    n = int(views)
-    if n >= 10000:
-        return f"{n // 10000}萬次觀看"
-    return f"{n:,}次觀看"
-
-
-def _build_bubble(video: dict, reason: str) -> FlexBubble:
-    return FlexBubble(
-        hero=FlexImage(
-            url=video["thumbnail"],
-            size="full",
-            aspect_ratio="20:13",
-            aspect_mode="cover",
-        ),
-        body=FlexBox(
-            layout="vertical",
-            spacing="sm",
-            contents=[
-                FlexText(text=video["title"], weight="bold", wrap=True, size="sm"),
-                FlexText(text=video["channel"], size="xs", color="#888888"),
-                FlexText(text=_format_views(video["views"]), size="xs", color="#aaaaaa"),
-                FlexText(text=reason, size="xs", color="#3B82F6", wrap=True),
-            ],
-        ),
-        footer=FlexBox(
-            layout="vertical",
-            contents=[
-                FlexButton(
-                    action=URIAction(label="立即觀看", uri=f"https://youtu.be/{video['videoId']}"),
-                    style="primary",
-                    color="#FF0000",
-                )
-            ],
-        ),
-    )
+def _collect_links(topics: list[str]) -> list[str]:
+    links: list[str] = []
+    seen = set()
+    for topic, needed in Counter(topics).items():
+        for link in search_youtube_links(f"{topic} 台灣", count=needed):
+            if link not in seen:
+                seen.add(link)
+                links.append(link)
+    random.shuffle(links)
+    return links
 
 
 def register(configuration):
     def handle_text(event: MessageEvent):
         if event.message.text.strip() not in TRIGGER_KEYWORDS:
             return
-        merged = _read_cache()
-        if not merged:
-            videos = search_videos_by_topic()
-            merged = [{**v, "reason": _RECOMMEND_REASON} for v in videos]
-            _write_cache(merged)
-        bubbles = [_build_bubble(v, v["reason"]) for v in merged]
-        if bubbles:
-            message = FlexMessage(
-                alt_text="台灣 YouTube 熱門影片推薦",
-                contents=FlexCarousel(contents=bubbles),
-            )
+
+        topics = _pick_topics()
+        print("[YT] topics:", topics)
+        try:
+            links = _collect_links(topics)
+        except Exception as e:
+            print("[YT] scrape failed:", e)
+            links = None
+
+        if links is None:
+            messages = [TextMessage(text="爬取影片時發生錯誤，請稍後再試一次。")]
+        elif links:
+            messages = [TextMessage(text=link) for link in links]
         else:
-            message = TextMessage(text="這次熱門影片中沒有找到跟健康/理財/人際溝通/房地產相關的影片，晚點再試試看吧！")
+            messages = [TextMessage(text="這次沒有找到相關影片，換個時間再試試看吧！")]
+
         with ApiClient(configuration) as client:
             MessagingApi(client).reply_message(
                 ReplyMessageRequest(
                     reply_token=event.reply_token,
-                    messages=[message],
+                    messages=messages,
                 )
             )
 
