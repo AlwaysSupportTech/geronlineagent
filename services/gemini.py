@@ -95,6 +95,14 @@ def generate_image(prompt: str) -> bytes:
     raise RuntimeError("Gemini 沒有回傳圖片資料")
 
 
+def chat_reply(text: str) -> str:
+    response = client.models.generate_content(
+        model=_model,
+        contents=text,
+    )
+    return response.text
+
+
 def filter_videos(videos: list[dict]) -> list[dict]:
     slim = [{"videoId": v["videoId"], "title": v["title"]} for v in videos]
     response = client.models.generate_content(

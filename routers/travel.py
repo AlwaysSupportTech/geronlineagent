@@ -154,10 +154,10 @@ def register(configuration):
                         messages=[TextMessage(text="想去哪裡呢？輸入地區名稱吧！")],
                     )
                 )
-            return
+            return True
 
         if user_state.get(user_id) != "waiting_for_region":
-            return
+            return False
         del user_state[user_id]
         region = text
         attractions = get_attractions(region)
@@ -176,5 +176,6 @@ def register(configuration):
                     ],
                 )
             )
+        return True
 
     return handle_text

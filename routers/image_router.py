@@ -33,10 +33,10 @@ def register(configuration):
                         messages=[TextMessage(text="想生成什麼圖片呢？請輸入描述！")],
                     )
                 )
-            return
+            return True
 
         if user_state.get(user_id) != "waiting_for_prompt":
-            return
+            return False
         del user_state[user_id]
         prompt = text
 
@@ -52,7 +52,7 @@ def register(configuration):
                         messages=[TextMessage(text="生成圖片時發生錯誤，請稍後再試一次。")],
                     )
                 )
-                return
+                return True
 
             os.makedirs(_MEDIA_DIR, exist_ok=True)
             filename = f"{uuid.uuid4().hex}.png"
@@ -71,5 +71,6 @@ def register(configuration):
                     ],
                 )
             )
+        return True
 
     return handle_text

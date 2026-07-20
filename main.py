@@ -9,7 +9,7 @@ from linebot.v3.webhooks import MessageEvent, TextMessageContent
 
 from config import LINE_CHANNEL_ACCESS_TOKEN, LINE_CHANNEL_SECRET
 from request_context import set_base_url
-from routers import image_router, travel, yt_router
+from routers import chat_router, image_router, travel, yt_router
 
 os.makedirs("media", exist_ok=True)
 
@@ -24,12 +24,15 @@ _text_handlers = [
     yt_router.register(configuration),
     image_router.register(configuration),
 ]
+_fallback_handler = chat_router.register(configuration)
 
 
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_text(event: MessageEvent):
     for text_handler in _text_handlers:
-        text_handler(event)
+        if text_handler(event):
+            return
+    _fallback_handler(event)
 
 
 @app.post("/callback")

@@ -44,7 +44,7 @@ def _collect_links(topics: list[str]) -> list[str]:
 def register(configuration):
     def handle_text(event: MessageEvent):
         if event.message.text.strip() not in TRIGGER_KEYWORDS:
-            return
+            return False
 
         topics = _pick_topics()
         print("[YT] topics:", topics)
@@ -68,5 +68,6 @@ def register(configuration):
                     messages=messages,
                 )
             )
+        return True
 
     return handle_text
