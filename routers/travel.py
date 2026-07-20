@@ -100,7 +100,7 @@ def _build_bubble(attraction: dict) -> FlexBubble:
     if hours_box is not None:
         body_contents.append(FlexSeparator(margin="sm"))
         body_contents.append(
-            FlexText(text="營業時間", size="xs", weight="bold", color="#1E3A5F")
+            FlexText(text="營業時間", size="xs", weight="bold", color="#70F2FF")
         )
         body_contents.append(hours_box)
 
